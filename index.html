@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienda Deportiva</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 1rem;
+            text-align: center;
+        }
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            overflow: hidden;
+        }
+        .product-list, .order-list {
+            list-style: none;
+            padding: 0;
+        }
+        .product-item, .order-item {
+            background: #fff;
+            margin: 0.5rem 0;
+            padding: 1rem;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+        button {
+            background-color: #333;
+            color: #fff;
+            border: none;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #555;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Bienvenido a la Tienda Deportiva</h1>
+    </header>
+    <div class="container">
+        <h2>Consultar Productos</h2>
+        <button onclick="fetchProducts()">Ver Productos</button>
+        <ul id="product-list" class="product-list"></ul>
+
+        <h2>Crear Pedido</h2>
+        <button onclick="createOrder()">Crear Pedido</button>
+
+        <h2>Pedidos Pendientes</h2>
+        <button onclick="fetchPendingOrders()">Ver Pedidos Pendientes</button>
+        <ul id="order-list" class="order-list"></ul>
+    </div>
+
+    <script>
+        async function fetchProducts() {
+            const response = await fetch('http://localhost:3000/products');
+            const products = await response.json();
+            const list = document.getElementById('product-list');
+            list.innerHTML = '';
+            products.forEach(product => {
+                list.innerHTML += `
+                    <li class="product-item">
+                        <strong>${product.code}</strong>: ${product.description} - $${product.price}
+                    </li>
+                `;
+            });
+        }
+
+        async function createOrder() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Debes iniciar sesión para crear un pedido');
+                return;
+            }
+
+            const products = [{ code: 'P001', quantity: 1 }];
+            const response = await fetch('http://localhost:3000/orders', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ products })
+            });
+            if (response.ok) {
+                alert('Pedido creado');
+            } else {
+                alert('Error al crear el pedido');
+            }
+        }
+
+        async function fetchPendingOrders() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Debes iniciar sesión para ver los pedidos');
+                return;
+            }
+
+            const response = await fetch('http://localhost:3000/orders/pending', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const orders = await response.json();
+            const list = document.getElementById('order-list');
+            list.innerHTML = '';
+            orders.forEach(order => {
+                list.innerHTML += `
+                    <li class="order-item">
+                        Pedido ${order._id} - Estado: ${order.status}
+                    </li>
+                `;
+            });
+        }
+    </script>
+</body>
+</html>
